@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buchhaltung</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo">💰</span>
+        <span class="logo-text">Buchhaltung</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#" class="nav-link active" data-view="dashboard">Übersicht</a></li>
+        <li><a href="#" class="nav-link" data-view="transactions">Buchungen</a></li>
+        <li><a href="#" class="nav-link" data-view="new">+ Neue Buchung</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <button id="exportBtn" class="btn-secondary">Export CSV</button>
+        <button id="importBtn" class="btn-secondary">Import CSV</button>
+        <input type="file" id="importFile" accept=".csv" style="display:none" />
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="content">
+
+      <!-- Dashboard View -->
+      <div id="view-dashboard" class="view active">
+        <div class="page-header">
+          <h1>Übersicht</h1>
+          <div class="period-selector">
+            <select id="dashPeriod">
+              <option value="month">Diesen Monat</option>
+              <option value="quarter">Dieses Quartal</option>
+              <option value="year">Dieses Jahr</option>
+              <option value="all">Alle</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi kpi--income">
+            <div class="kpi-label">Einnahmen</div>
+            <div class="kpi-value" id="kpiIncome">CHF 0.00</div>
+          </div>
+          <div class="kpi kpi--expense">
+            <div class="kpi-label">Ausgaben</div>
+            <div class="kpi-value" id="kpiExpense">CHF 0.00</div>
+          </div>
+          <div class="kpi kpi--balance">
+            <div class="kpi-label">Saldo</div>
+            <div class="kpi-value" id="kpiBalance">CHF 0.00</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card">
+            <h2>Monatsverlauf</h2>
+            <canvas id="monthChart" height="220"></canvas>
+          </div>
+          <div class="card">
+            <h2>Ausgaben nach Kategorie</h2>
+            <canvas id="catChart" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Letzte Buchungen</h2>
+          <table class="tx-table" id="recentTable">
+            <thead>
+              <tr>
+                <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th class="num">Betrag</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transactions View -->
+      <div id="view-transactions" class="view">
+        <div class="page-header">
+          <h1>Alle Buchungen</h1>
+          <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="Suchen…" />
+            <select id="filterType">
+              <option value="">Alle Typen</option>
+              <option value="income">Einnahmen</option>
+              <option value="expense">Ausgaben</option>
+            </select>
+            <select id="filterCat">
+              <option value="">Alle Kategorien</option>
+            </select>
+            <select id="filterPeriod">
+              <option value="all">Alle Zeiträume</option>
+              <option value="month">Dieser Monat</option>
+              <option value="quarter">Dieses Quartal</option>
+              <option value="year">Dieses Jahr</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="tx-table" id="allTable">
+            <thead>
+              <tr>
+                <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th class="num">Betrag</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div id="emptyState" class="empty-state" style="display:none">Keine Buchungen gefunden.</div>
+        </div>
+      </div>
+
+      <!-- New Transaction View -->
+      <div id="view-new" class="view">
+        <div class="page-header">
+          <h1 id="formTitle">Neue Buchung</h1>
+        </div>
+        <div class="card form-card">
+          <form id="txForm">
+            <input type="hidden" id="editId" />
+
+            <div class="type-toggle">
+              <button type="button" class="toggle-btn active" data-type="expense">Ausgabe</button>
+              <button type="button" class="toggle-btn" data-type="income">Einnahme</button>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="fDate" required />
+              </div>
+              <div class="form-group">
+                <label>Betrag (CHF)</label>
+                <input type="number" id="fAmount" step="0.01" min="0.01" placeholder="0.00" required />
+              </div>
+              <div class="form-group span-2">
+                <label>Beschreibung</label>
+                <input type="text" id="fDesc" placeholder="z.B. Miete, Gehalt, Einkauf…" required />
+              </div>
+              <div class="form-group">
+                <label>Kategorie</label>
+                <div class="cat-row">
+                  <select id="fCat" required></select>
+                  <button type="button" id="newCatBtn" class="btn-icon" title="Neue Kategorie">+</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Notiz (optional)</label>
+                <input type="text" id="fNote" placeholder="Zusätzliche Infos…" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" id="submitBtn">Speichern</button>
+              <button type="button" class="btn-ghost" id="cancelEdit" style="display:none">Abbrechen</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Delete confirmation dialog -->
+  <div id="dialog" class="dialog-overlay" style="display:none">
+    <div class="dialog-box">
+      <p id="dialogMsg">Buchung wirklich löschen?</p>
+      <div class="dialog-actions">
+        <button id="dialogConfirm" class="btn-danger">Löschen</button>
+        <button id="dialogCancel" class="btn-ghost">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New category dialog -->
+  <div id="catDialog" class="dialog-overlay" style="display:none">
+    <div class="dialog-box">
+      <p>Neue Kategorie</p>
+      <input type="text" id="newCatInput" placeholder="Kategoriename" style="width:100%;margin:12px 0" />
+      <div class="dialog-actions">
+        <button id="catDialogOk" class="btn-primary">Hinzufügen</button>
+        <button id="catDialogCancel" class="btn-ghost">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

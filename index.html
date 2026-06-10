@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Buchhaltung</title>
+  <title>Zimtwelt · Buchhaltung</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,121 +12,152 @@
   <!-- Sidebar -->
   <nav class="sidebar">
     <div class="sidebar-header">
-      <span class="logo">💰</span>
-      <span class="logo-text">Buchhaltung</span>
+      <div class="logo-block">
+        <span class="logo-icon">🌿</span>
+        <div>
+          <div class="logo-name" id="sidebarName">Zimtwelt</div>
+          <div class="logo-sub">Buchhaltung</div>
+        </div>
+      </div>
     </div>
+
     <ul class="nav-links">
-      <li><a href="#" class="nav-link active" data-view="dashboard">Übersicht</a></li>
-      <li><a href="#" class="nav-link" data-view="transactions">Buchungen</a></li>
-      <li><a href="#" class="nav-link" data-view="new">+ Neue Buchung</a></li>
+      <li><a href="#" class="nav-link active" data-view="dashboard">
+        <span class="nav-icon">📊</span> Übersicht 2025
+      </a></li>
+      <li><a href="#" class="nav-link" data-view="transactions">
+        <span class="nav-icon">📋</span> Buchungen
+      </a></li>
       <li class="nav-sep"></li>
-      <li><a href="#" class="nav-link" data-view="customers">Kunden</a></li>
-      <li><a href="#" class="nav-link" data-view="invoices">Rechnungen</a></li>
-      <li><a href="#" class="nav-link" data-view="new-invoice">+ Neue Rechnung</a></li>
+      <li><a href="#" class="nav-link" data-view="customers">
+        <span class="nav-icon">👥</span> Kunden
+      </a></li>
+      <li><a href="#" class="nav-link" data-view="invoices">
+        <span class="nav-icon">🧾</span> Rechnungen
+      </a></li>
+      <li class="nav-sep"></li>
+      <li><a href="#" class="nav-link" data-view="settings">
+        <span class="nav-icon">⚙️</span> Einstellungen
+      </a></li>
     </ul>
+
     <div class="sidebar-footer">
-      <button id="exportBtn" class="btn-secondary">Export CSV</button>
-      <button id="importBtn" class="btn-secondary">Import CSV</button>
-      <input type="file" id="importFile" accept=".csv" style="display:none" />
+      <button id="closingBtn" class="btn-closing">
+        📥 Jahresabschluss 2025
+      </button>
     </div>
   </nav>
 
-  <!-- Main content -->
   <main class="content">
 
     <!-- ── Dashboard ──────────────────────────────────────────── -->
     <div id="view-dashboard" class="view active">
       <div class="page-header">
-        <h1>Übersicht</h1>
-        <div class="period-selector">
-          <select id="dashPeriod">
-            <option value="month">Diesen Monat</option>
-            <option value="quarter">Dieses Quartal</option>
-            <option value="year">Dieses Jahr</option>
-            <option value="all">Alle</option>
-          </select>
+        <div>
+          <h1>Übersicht 2025</h1>
+          <p class="page-sub">Einnahmen &amp; Ausgaben im Überblick</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" id="quickAddBtn">+ Neue Buchung</button>
         </div>
       </div>
 
       <div class="kpi-row">
         <div class="kpi kpi--income">
-          <div class="kpi-label">Einnahmen</div>
+          <div class="kpi-label">Einnahmen 2025</div>
           <div class="kpi-value" id="kpiIncome">CHF 0.00</div>
+          <div class="kpi-sub" id="kpiIncomeSub"></div>
         </div>
         <div class="kpi kpi--expense">
-          <div class="kpi-label">Ausgaben</div>
+          <div class="kpi-label">Ausgaben 2025</div>
           <div class="kpi-value" id="kpiExpense">CHF 0.00</div>
+          <div class="kpi-sub" id="kpiExpenseSub"></div>
         </div>
         <div class="kpi kpi--balance">
-          <div class="kpi-label">Saldo</div>
+          <div class="kpi-label">Gewinn / Verlust</div>
           <div class="kpi-value" id="kpiBalance">CHF 0.00</div>
+          <div class="kpi-sub" id="kpiBalanceSub"></div>
+        </div>
+        <div class="kpi kpi--neutral">
+          <div class="kpi-label">Offene Rechnungen</div>
+          <div class="kpi-value" id="kpiOpen">CHF 0.00</div>
+          <div class="kpi-sub" id="kpiOpenSub"></div>
         </div>
       </div>
 
       <div class="charts-row">
         <div class="card">
-          <h2>Monatsverlauf</h2>
-          <canvas id="monthChart" height="220"></canvas>
+          <h2>Monatsverlauf 2025</h2>
+          <canvas id="monthChart" height="200"></canvas>
         </div>
         <div class="card">
           <h2>Ausgaben nach Kategorie</h2>
-          <canvas id="catChart" height="220"></canvas>
+          <canvas id="catChart" height="200"></canvas>
         </div>
       </div>
 
+      <!-- Quick-Add inline -->
+      <div class="card" id="quickAddCard" style="display:none">
+        <h2>Buchung erfassen</h2>
+        <form id="quickForm" class="quick-form">
+          <div class="type-toggle quick-toggle">
+            <button type="button" class="toggle-btn active" data-type="expense">Ausgabe</button>
+            <button type="button" class="toggle-btn" data-type="income">Einnahme</button>
+          </div>
+          <div class="quick-fields">
+            <input type="date"   id="qDate"   required />
+            <input type="number" id="qAmount" step="0.01" min="0.01" placeholder="Betrag CHF" required />
+            <input type="text"   id="qDesc"   placeholder="Beschreibung" required />
+            <select id="qCat" required></select>
+            <select id="qCustomer"><option value="">Kein Kunde</option></select>
+            <button type="submit" class="btn-primary">Speichern</button>
+            <button type="button" id="quickCancelBtn" class="btn-ghost">✕</button>
+          </div>
+        </form>
+      </div>
+
       <div class="card">
-        <h2>Letzte Buchungen</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2 style="margin:0">Letzte Buchungen</h2>
+          <a href="#" class="link-sm" data-view="transactions">Alle anzeigen →</a>
+        </div>
         <table class="tx-table" id="recentTable">
           <thead><tr>
-            <th>Datum</th><th>Beschreibung</th><th>Kunde</th><th>Kategorie</th><th class="num">Betrag</th>
+            <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th>Kunde</th><th class="num">Betrag</th>
           </tr></thead>
           <tbody></tbody>
         </table>
+        <div id="recentEmpty" class="empty-state" style="display:none">
+          Noch keine Buchungen. <a href="#" id="firstBookingLink">Erste Buchung erfassen →</a>
+        </div>
       </div>
     </div>
 
     <!-- ── Transactions ───────────────────────────────────────── -->
     <div id="view-transactions" class="view">
       <div class="page-header">
-        <h1>Alle Buchungen</h1>
-        <div class="filter-bar">
-          <input type="text" id="searchInput" placeholder="Suchen…" />
-          <select id="filterType">
-            <option value="">Alle Typen</option>
-            <option value="income">Einnahmen</option>
-            <option value="expense">Ausgaben</option>
-          </select>
-          <select id="filterCat"><option value="">Alle Kategorien</option></select>
-          <select id="filterPeriod">
-            <option value="all">Alle Zeiträume</option>
-            <option value="month">Dieser Monat</option>
-            <option value="quarter">Dieses Quartal</option>
-            <option value="year">Dieses Jahr</option>
-          </select>
+        <div>
+          <h1>Buchungen</h1>
+          <p class="page-sub">Alle Einnahmen und Ausgaben</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" id="newTxBtn">+ Neue Buchung</button>
+          <button class="btn-secondary-sm" id="exportBtn">↓ CSV</button>
+          <button class="btn-secondary-sm" id="importBtn">↑ CSV</button>
+          <input type="file" id="importFile" accept=".csv" style="display:none" />
         </div>
       </div>
-      <div class="card">
-        <table class="tx-table" id="allTable">
-          <thead><tr>
-            <th>Datum</th><th>Beschreibung</th><th>Kunde</th><th>Kategorie</th><th class="num">Betrag</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="emptyState" class="empty-state" style="display:none">Keine Buchungen gefunden.</div>
-      </div>
-    </div>
 
-    <!-- ── New / Edit Transaction ─────────────────────────────── -->
-    <div id="view-new" class="view">
-      <div class="page-header"><h1 id="formTitle">Neue Buchung</h1></div>
-      <div class="card form-card">
+      <!-- Inline add/edit form -->
+      <div class="card" id="txFormCard" style="display:none">
+        <h2 id="txFormTitle">Neue Buchung</h2>
         <form id="txForm">
           <input type="hidden" id="editId" />
-          <div class="type-toggle">
+          <div class="type-toggle" style="margin-bottom:16px">
             <button type="button" class="toggle-btn active" data-type="expense">Ausgabe</button>
             <button type="button" class="toggle-btn" data-type="income">Einnahme</button>
           </div>
-          <div class="form-grid">
+          <div class="form-grid-4">
             <div class="form-group">
               <label>Datum</label>
               <input type="date" id="fDate" required />
@@ -135,9 +166,9 @@
               <label>Betrag (CHF)</label>
               <input type="number" id="fAmount" step="0.01" min="0.01" placeholder="0.00" required />
             </div>
-            <div class="form-group span-2">
+            <div class="form-group fg-2">
               <label>Beschreibung</label>
-              <input type="text" id="fDesc" placeholder="z.B. Miete, Gehalt, Einkauf…" required />
+              <input type="text" id="fDesc" placeholder="z.B. Miete, Lieferant, Einnahme…" required />
             </div>
             <div class="form-group">
               <label>Kategorie</label>
@@ -147,69 +178,94 @@
               </div>
             </div>
             <div class="form-group">
-              <label>Kunde (optional)</label>
-              <select id="fCustomer">
-                <option value="">— kein Kunde —</option>
-              </select>
+              <label>Kunde</label>
+              <select id="fCustomer"><option value="">— kein —</option></select>
             </div>
-            <div class="form-group span-2">
-              <label>Notiz (optional)</label>
-              <input type="text" id="fNote" placeholder="Zusätzliche Infos…" />
+            <div class="form-group fg-2">
+              <label>Notiz</label>
+              <input type="text" id="fNote" placeholder="Optional" />
             </div>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" id="submitBtn">Speichern</button>
-            <button type="button" class="btn-ghost" id="cancelEdit" style="display:none">Abbrechen</button>
+            <button type="button" class="btn-ghost" id="cancelEdit">Abbrechen</button>
           </div>
         </form>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar-card">
+        <input type="text"   id="searchInput"  placeholder="🔍 Suchen…" />
+        <select id="filterType">
+          <option value="">Alle</option>
+          <option value="income">Einnahmen</option>
+          <option value="expense">Ausgaben</option>
+        </select>
+        <select id="filterCat"><option value="">Alle Kategorien</option></select>
+        <select id="filterYear">
+          <option value="2025" selected>2025</option>
+          <option value="2024">2024</option>
+          <option value="2026">2026</option>
+          <option value="all">Alle Jahre</option>
+        </select>
+        <select id="filterMonth">
+          <option value="">Alle Monate</option>
+          <option value="01">Januar</option><option value="02">Februar</option>
+          <option value="03">März</option><option value="04">April</option>
+          <option value="05">Mai</option><option value="06">Juni</option>
+          <option value="07">Juli</option><option value="08">August</option>
+          <option value="09">September</option><option value="10">Oktober</option>
+          <option value="11">November</option><option value="12">Dezember</option>
+        </select>
+      </div>
+
+      <div class="tx-summary-bar" id="txSummaryBar"></div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tx-table" id="allTable">
+          <thead><tr>
+            <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th>Kunde</th>
+            <th class="num">Betrag</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="emptyState" class="empty-state">Keine Buchungen gefunden.</div>
       </div>
     </div>
 
     <!-- ── Customers ──────────────────────────────────────────── -->
     <div id="view-customers" class="view">
       <div class="page-header">
-        <h1>Kunden</h1>
+        <div><h1>Kunden</h1><p class="page-sub">Kontakt- und Firmendaten</p></div>
         <button class="btn-primary" id="newCustomerBtn">+ Neuer Kunde</button>
       </div>
-      <div class="card">
+      <div class="card" style="padding:0;overflow:hidden">
         <table class="tx-table" id="customerTable">
           <thead><tr>
-            <th>Firma / Name</th><th>Kontakt</th><th>E-Mail</th><th>Telefon</th><th>Ort</th><th></th>
+            <th>Firma</th><th>Ansprechpartner</th><th>E-Mail</th><th>Telefon</th><th>Ort</th><th></th>
           </tr></thead>
           <tbody></tbody>
         </table>
-        <div id="custEmptyState" class="empty-state" style="display:none">Noch keine Kunden erfasst.</div>
+        <div id="custEmptyState" class="empty-state">Noch keine Kunden erfasst.</div>
       </div>
     </div>
 
     <!-- ── Invoices ───────────────────────────────────────────── -->
     <div id="view-invoices" class="view">
       <div class="page-header">
-        <h1>Rechnungen</h1>
-        <button class="btn-primary" id="newInvoiceNavBtn">+ Neue Rechnung</button>
+        <div><h1>Rechnungen</h1><p class="page-sub">Erstellen &amp; als PDF herunterladen</p></div>
+        <button class="btn-primary" id="newInvoiceBtn">+ Neue Rechnung</button>
       </div>
-      <div class="card">
-        <table class="tx-table" id="invoiceTable">
-          <thead><tr>
-            <th>Nr.</th><th>Datum</th><th>Kunde</th><th>Betreff</th><th>Fällig</th><th class="num">Betrag</th><th>Status</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="invEmptyState" class="empty-state" style="display:none">Noch keine Rechnungen vorhanden.</div>
-      </div>
-    </div>
 
-    <!-- ── New / Edit Invoice ─────────────────────────────────── -->
-    <div id="view-new-invoice" class="view">
-      <div class="page-header"><h1 id="invFormTitle">Neue Rechnung</h1></div>
-      <div class="card form-card" style="max-width:780px">
+      <!-- Inline invoice form -->
+      <div class="card" id="invFormCard" style="display:none">
+        <h2 id="invFormTitle">Neue Rechnung</h2>
         <form id="invForm">
           <input type="hidden" id="invEditId" />
-
-          <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="form-grid-4" style="margin-bottom:16px">
             <div class="form-group">
-              <label>Rechnungsnummer</label>
-              <input type="text" id="invNumber" placeholder="z.B. 2026-001" required />
+              <label>Rechnungsnr.</label>
+              <input type="text" id="invNumber" required />
             </div>
             <div class="form-group">
               <label>Datum</label>
@@ -219,61 +275,119 @@
               <label>Fällig am</label>
               <input type="date" id="invDue" required />
             </div>
-            <div class="form-group span-3">
-              <label>Kunde</label>
-              <select id="invCustomer" required>
-                <option value="">— Kunde auswählen —</option>
-              </select>
+            <div class="form-group">
+              <label>Kunde *</label>
+              <select id="invCustomer" required><option value="">— wählen —</option></select>
             </div>
-            <div class="form-group span-3">
+            <div class="form-group fg-4">
               <label>Betreff</label>
-              <input type="text" id="invSubject" placeholder="z.B. Webentwicklung April 2026" required />
+              <input type="text" id="invSubject" placeholder="z.B. Webdesign April 2025" required />
             </div>
           </div>
 
-          <!-- Line items -->
-          <div style="margin-bottom:16px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">Positionen</span>
-              <button type="button" id="addLineBtn" class="btn-ghost" style="padding:5px 12px;font-size:13px">+ Position</button>
-            </div>
+          <div class="lines-header">
+            <span>Positionen</span>
+            <button type="button" id="addLineBtn" class="btn-ghost-sm">+ Position</button>
+          </div>
+          <div class="lines-wrap">
             <table class="tx-table line-table">
               <thead><tr>
-                <th style="width:40%">Beschreibung</th>
-                <th class="num" style="width:12%">Menge</th>
-                <th class="num" style="width:18%">Einzelpreis</th>
-                <th class="num" style="width:10%">MwSt %</th>
-                <th class="num" style="width:15%">Total</th>
-                <th style="width:5%"></th>
+                <th>Beschreibung</th>
+                <th class="num" style="width:80px">Menge</th>
+                <th class="num" style="width:110px">Preis CHF</th>
+                <th class="num" style="width:75px">MwSt %</th>
+                <th class="num" style="width:110px">Total</th>
+                <th style="width:36px"></th>
               </tr></thead>
               <tbody id="lineItems"></tbody>
             </table>
-            <div class="inv-totals">
-              <div class="inv-total-row"><span>Netto</span><span id="invNet">CHF 0.00</span></div>
-              <div class="inv-total-row"><span>MwSt</span><span id="invVat">CHF 0.00</span></div>
-              <div class="inv-total-row inv-total-bold"><span>Total</span><span id="invTotal">CHF 0.00</span></div>
-            </div>
+          </div>
+          <div class="inv-totals">
+            <div class="inv-total-row"><span>Netto</span><span id="invNet">CHF 0.00</span></div>
+            <div class="inv-total-row"><span>MwSt</span><span id="invVat">CHF 0.00</span></div>
+            <div class="inv-total-row inv-total-bold"><span>Total CHF</span><span id="invTotal">0.00</span></div>
           </div>
 
-          <div class="form-grid">
-            <div class="form-group span-2">
-              <label>Notizen / Zahlungsbedingungen</label>
-              <textarea id="invNotes" rows="3" placeholder="z.B. Zahlbar innerhalb 30 Tagen. Danke für Ihren Auftrag."></textarea>
-            </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Zahlungsbedingungen / Notiz</label>
+            <textarea id="invNotes" rows="2" placeholder="Zahlbar innerhalb 30 Tagen."></textarea>
           </div>
-
-          <div class="form-actions">
+          <div class="form-actions" style="margin-top:16px">
             <button type="submit" class="btn-primary" id="invSubmitBtn">Speichern</button>
-            <button type="button" class="btn-ghost" id="invCancelBtn" style="display:none">Abbrechen</button>
+            <button type="button" class="btn-ghost" id="invCancelBtn">Abbrechen</button>
           </div>
         </form>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tx-table" id="invoiceTable">
+          <thead><tr>
+            <th>Nr.</th><th>Datum</th><th>Kunde</th><th>Betreff</th>
+            <th>Fällig</th><th class="num">Total</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="invEmptyState" class="empty-state">Noch keine Rechnungen vorhanden.</div>
+      </div>
+    </div>
+
+    <!-- ── Settings ───────────────────────────────────────────── -->
+    <div id="view-settings" class="view">
+      <div class="page-header">
+        <div><h1>Einstellungen</h1><p class="page-sub">Firmendaten für Rechnungen und PDF</p></div>
+      </div>
+      <div class="card form-card" style="max-width:540px">
+        <form id="settingsForm">
+          <div class="form-grid" style="gap:14px;margin-bottom:20px">
+            <div class="form-group span-2">
+              <label>Firmenname</label>
+              <input type="text" id="sFirma" placeholder="Zimtwelt" />
+            </div>
+            <div class="form-group span-2">
+              <label>Strasse &amp; Nr.</label>
+              <input type="text" id="sStreet" placeholder="Musterstrasse 12" />
+            </div>
+            <div class="form-group">
+              <label>PLZ</label>
+              <input type="text" id="sZip" placeholder="8000" />
+            </div>
+            <div class="form-group">
+              <label>Ort</label>
+              <input type="text" id="sCity" placeholder="Zürich" />
+            </div>
+            <div class="form-group span-2">
+              <label>E-Mail</label>
+              <input type="email" id="sEmail" placeholder="info@zimtwelt.ch" />
+            </div>
+            <div class="form-group span-2">
+              <label>Telefon</label>
+              <input type="tel" id="sPhone" placeholder="+41 44 000 00 00" />
+            </div>
+            <div class="form-group span-2">
+              <label>Website</label>
+              <input type="text" id="sWeb" placeholder="www.zimtwelt.ch" />
+            </div>
+            <div class="form-group span-2">
+              <label>UID / MwSt-Nr.</label>
+              <input type="text" id="sUid" placeholder="CHE-123.456.789 MWST" />
+            </div>
+            <div class="form-group span-2">
+              <label>IBAN</label>
+              <input type="text" id="sIban" placeholder="CH56 0483 5012 3456 7800 9" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Speichern</button>
+          </div>
+        </form>
+        <div id="settingsSaved" class="save-toast" style="display:none">✓ Gespeichert</div>
       </div>
     </div>
 
   </main>
 </div>
 
-<!-- Delete confirmation -->
+<!-- Dialogs -->
 <div id="dialog" class="dialog-overlay" style="display:none">
   <div class="dialog-box">
     <p id="dialogMsg">Wirklich löschen?</p>
@@ -284,7 +398,6 @@
   </div>
 </div>
 
-<!-- New category -->
 <div id="catDialog" class="dialog-overlay" style="display:none">
   <div class="dialog-box">
     <p>Neue Kategorie</p>
@@ -296,52 +409,51 @@
   </div>
 </div>
 
-<!-- Customer form dialog -->
 <div id="custDialog" class="dialog-overlay" style="display:none">
-  <div class="dialog-box" style="min-width:460px;max-width:520px">
+  <div class="dialog-box" style="min-width:460px">
     <p id="custDialogTitle">Neuer Kunde</p>
     <form id="custForm" style="margin-top:14px">
       <input type="hidden" id="custEditId" />
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0">
+      <div class="form-grid" style="gap:12px;margin-bottom:0">
         <div class="form-group span-2">
           <label>Firma</label>
           <input type="text" id="cFirma" placeholder="Muster GmbH" />
         </div>
         <div class="form-group">
           <label>Vorname</label>
-          <input type="text" id="cFirst" placeholder="Max" />
+          <input type="text" id="cFirst" />
         </div>
         <div class="form-group">
           <label>Nachname</label>
-          <input type="text" id="cLast" placeholder="Mustermann" />
+          <input type="text" id="cLast" />
         </div>
         <div class="form-group span-2">
-          <label>Strasse &amp; Nr.</label>
-          <input type="text" id="cStreet" placeholder="Musterstrasse 1" />
+          <label>Strasse</label>
+          <input type="text" id="cStreet" />
         </div>
         <div class="form-group">
           <label>PLZ</label>
-          <input type="text" id="cZip" placeholder="8000" />
+          <input type="text" id="cZip" />
         </div>
         <div class="form-group">
           <label>Ort</label>
-          <input type="text" id="cCity" placeholder="Zürich" />
+          <input type="text" id="cCity" />
         </div>
         <div class="form-group">
           <label>Land</label>
-          <input type="text" id="cCountry" placeholder="Schweiz" value="Schweiz" />
+          <input type="text" id="cCountry" value="Schweiz" />
         </div>
         <div class="form-group">
           <label>Telefon</label>
-          <input type="tel" id="cPhone" placeholder="+41 44 000 00 00" />
+          <input type="tel" id="cPhone" />
         </div>
         <div class="form-group span-2">
           <label>E-Mail</label>
-          <input type="email" id="cEmail" placeholder="info@firma.ch" />
+          <input type="email" id="cEmail" />
         </div>
         <div class="form-group span-2">
-          <label>UID / MwSt-Nr. (optional)</label>
-          <input type="text" id="cUid" placeholder="CHE-123.456.789 MWST" />
+          <label>UID / MwSt-Nr.</label>
+          <input type="text" id="cUid" />
         </div>
       </div>
     </form>
@@ -352,15 +464,14 @@
   </div>
 </div>
 
-<!-- Invoice status dialog -->
 <div id="invStatusDialog" class="dialog-overlay" style="display:none">
   <div class="dialog-box">
-    <p>Status ändern</p>
+    <p>Rechnungsstatus</p>
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-      <button class="status-pick btn-ghost" data-status="draft">Entwurf</button>
-      <button class="status-pick btn-ghost" data-status="sent">Versendet</button>
-      <button class="status-pick btn-ghost" data-status="paid">Bezahlt</button>
-      <button class="status-pick btn-ghost" data-status="overdue">Überfällig</button>
+      <button class="status-pick" data-status="draft">📝 Entwurf</button>
+      <button class="status-pick" data-status="sent">📤 Versendet</button>
+      <button class="status-pick" data-status="paid">✅ Bezahlt</button>
+      <button class="status-pick" data-status="overdue">⚠️ Überfällig</button>
     </div>
     <div class="dialog-actions" style="margin-top:12px">
       <button id="invStatusCancel" class="btn-ghost">Abbrechen</button>

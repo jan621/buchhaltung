@@ -1,486 +1,875 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zimtwelt · Buchhaltung</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Budget Thun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" />
+<style>
+/* ── Tokens ──────────────────────────────────────────────────── */
+:root {
+  --bg:       #E8EBF2;
+  --surface:  #F3F5F9;
+  --card:     #FFFFFF;
+  --text:     #1B2034;
+  --muted:    #5C6580;
+  --border:   #D5D9E8;
+  --income:   #1A7A50;
+  --expense:  #C5392B;
+  --accent:   #2D5BE3;
+  --savings:  #6D3FC0;
+  --warning:  #C97800;
+  --r:        12px;
+  --shadow:   0 1px 4px rgba(27,32,52,.10);
+}
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) {
+    --bg:      #12141E;
+    --surface: #1A1D2B;
+    --card:    #21253A;
+    --text:    #E8EBF5;
+    --muted:   #7A82A0;
+    --border:  #2D3350;
+    --income:  #22A36A;
+    --expense: #E05A4A;
+    --accent:  #4D78F5;
+    --savings: #9060E0;
+    --warning: #E09020;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:      #12141E;
+  --surface: #1A1D2B;
+  --card:    #21253A;
+  --text:    #E8EBF5;
+  --muted:   #7A82A0;
+  --border:  #2D3350;
+  --income:  #22A36A;
+  --expense: #E05A4A;
+  --accent:  #4D78F5;
+  --savings: #9060E0;
+  --warning: #E09020;
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+input,select,textarea,button{font-family:inherit;font-size:inherit}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer}
+
+/* ── Layout ──────────────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 20px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{padding:28px 28px 48px;overflow-x:hidden}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.brand{display:flex;flex-direction:column;gap:2px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.brand-title{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--accent)}
+.brand-sub{font-size:12px;color:var(--muted);letter-spacing:.04em}
+
+.kpi-stack{display:flex;flex-direction:column;gap:10px}
+.kpi{background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);border-left:3px solid var(--border)}
+.kpi.green{border-left-color:var(--income)}
+.kpi.red{border-left-color:var(--expense)}
+.kpi.blue{border-left-color:var(--accent)}
+.kpi.violet{border-left-color:var(--savings)}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px}
+.kpi-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi.green .kpi-val{color:var(--income)}
+.kpi.red .kpi-val{color:var(--expense)}
+.kpi.blue .kpi-val{color:var(--accent)}
+.kpi.violet .kpi-val{color:var(--savings)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+.savings-bar-wrap{margin-top:6px}
+.savings-bar-track{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:6px}
+.savings-bar-fill{height:100%;background:var(--savings);border-radius:99px;transition:width .4s}
+
+/* ── Nav tabs ────────────────────────────────────────────────── */
+.nav{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--border);padding-top:16px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--muted);font-weight:500;font-size:13.5px;text-align:left;transition:background .12s,color .12s}
+.nav-btn:hover{background:var(--bg);color:var(--text)}
+.nav-btn.active{background:var(--accent);color:#fff}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+
+/* ── Budget settings ─────────────────────────────────────────── */
+.budget-settings{border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.budget-settings h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.setting-row label{font-size:12.5px;color:var(--text);flex:1}
+.setting-row input[type="number"]{width:90px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
+.setting-row input:focus{outline:none;border-color:var(--accent)}
+.setting-note{font-size:11px;color:var(--muted);padding-left:0}
+
+/* ── Main area ───────────────────────────────────────────────── */
+.view{display:none}
+.view.active{display:block}
+
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+.card{background:var(--card);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:16px}
+
+/* ── Salary breakdown ────────────────────────────────────────── */
+.salary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.salary-row:last-child{border-bottom:none}
+.salary-row.total{font-weight:700;font-size:15px;color:var(--income)}
+.salary-row.deduct{color:var(--expense)}
+.deduct-label{display:flex;align-items:center;gap:6px}
+.deduct-pct{font-size:11px;color:var(--muted);background:var(--surface);padding:1px 6px;border-radius:4px}
+.salary-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+/* ── Budget plan table ───────────────────────────────────────── */
+.budget-table{width:100%;border-collapse:collapse}
+.budget-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border)}
+.budget-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13.5px;font-variant-numeric:tabular-nums}
+.budget-table tr:last-child td{border-bottom:none}
+.budget-table .cat-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:var(--surface);color:var(--muted)}
+.budget-table .num{text-align:right;font-weight:600}
+.budget-table .inc{color:var(--income)}
+.budget-table .exp{color:var(--expense)}
+.budget-table .sav{color:var(--savings)}
+.budget-table tr.total-row td{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;background:var(--surface);border-radius:6px}
+
+/* ── Chart canvas ────────────────────────────────────────────── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+canvas{display:block;max-width:100%}
+
+/* ── Add transaction ─────────────────────────────────────────── */
+.type-toggle{display:flex;gap:8px;margin-bottom:16px}
+.type-btn{flex:1;padding:9px;border:2px solid var(--border);border-radius:8px;background:none;color:var(--muted);font-weight:600;font-size:13px;transition:all .13s}
+.type-btn.active.exp{border-color:var(--expense);background:#fef2f2;color:var(--expense)}
+.type-btn.active.inc{border-color:var(--income);background:#f0fdf6;color:var(--income)}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.fg-2{grid-column:span 2}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.form-group input,.form-group select{padding:8px 11px;border:1px solid var(--border);border-radius:7px;background:var(--card);color:var(--text);outline:none;transition:border-color .12s}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.btn-primary{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13.5px;transition:opacity .12s}
+.btn-primary:hover{opacity:.87}
+.btn-ghost{padding:8px 16px;background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:13px}
+.btn-ghost:hover{background:var(--surface)}
+.form-actions{display:flex;gap:10px;align-items:center}
+
+/* ── Transaction list ────────────────────────────────────────── */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-row select,.filter-row input{padding:7px 11px;border:1px solid var(--border);border-radius:7px;background:var(--card);color:var(--text);font-size:13px;outline:none}
+.filter-row input{flex:1;min-width:160px}
+.filter-row select:focus,.filter-row input:focus{border-color:var(--accent)}
+
+.tx-table{width:100%;border-collapse:collapse}
+.tx-table th{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface)}
+.tx-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13.5px}
+.tx-table tr:hover td{background:var(--surface)}
+.tx-table tr:last-child td{border-bottom:none}
+.tx-table .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600}
+.chip-exp{background:#fef2f2;color:var(--expense)}
+.chip-inc{background:#f0fdf6;color:var(--income)}
+.chip-cat{background:var(--surface);color:var(--muted)}
+.del-btn{background:none;border:none;color:var(--muted);padding:2px 6px;border-radius:4px;font-size:13px;transition:color .12s}
+.del-btn:hover{color:var(--expense)}
+.summary-strip{display:flex;gap:20px;font-size:13px;color:var(--muted);margin-bottom:12px;padding:10px 12px;background:var(--surface);border-radius:8px;flex-wrap:wrap}
+.summary-strip strong{font-variant-numeric:tabular-nums}
+.inc-val{color:var(--income);font-weight:600}
+.exp-val{color:var(--expense);font-weight:600}
+.bal-val{color:var(--accent);font-weight:600}
+.empty{text-align:center;padding:32px;color:var(--muted)}
+
+/* ── Analysis ────────────────────────────────────────────────── */
+.month-nav{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.month-nav button{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px}
+.month-nav button:hover{background:var(--surface)}
+.month-label{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;flex:1;text-align:center}
+
+/* ── Misc ────────────────────────────────────────────────────── */
+.theme-btn{position:fixed;top:14px;right:14px;padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;box-shadow:var(--shadow);z-index:100}
+.theme-btn:hover{color:var(--text)}
+
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto}
+  .charts-row{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .fg-2{grid-column:span 2}
+}
+@media(max-width:580px){
+  .form-grid{grid-template-columns:1fr}
+  .fg-2{grid-column:span 1}
+}
+</style>
 </head>
 <body>
-<div id="app">
 
-  <!-- Sidebar -->
-  <nav class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-block">
-        <span class="logo-icon">🌿</span>
-        <div>
-          <div class="logo-name" id="sidebarName">Zimtwelt</div>
-          <div class="logo-sub">Buchhaltung</div>
-        </div>
+<button class="theme-btn" id="themeBtn">🌙 Dark</button>
+
+<div class="shell">
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-title">Budget Thun</div>
+    <div class="brand-sub">Finanzplanung 2025</div>
+  </div>
+
+  <div class="kpi-stack">
+    <div class="kpi green">
+      <div class="kpi-label">Nettolohn / Monat</div>
+      <div class="kpi-val" id="sideNet">CHF 0</div>
+      <div class="kpi-sub">Brutto CHF 4'500 · Kanton Bern</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Ausgaben diesen Monat</div>
+      <div class="kpi-val" id="sideSpent">CHF 0</div>
+      <div class="kpi-sub" id="sideSpentSub">von Budget CHF 0</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Frei verfügbar</div>
+      <div class="kpi-val" id="sideFree">CHF 0</div>
+      <div class="kpi-sub" id="sideFreeSub"></div>
+    </div>
+    <div class="kpi violet">
+      <div class="kpi-label">Gespart (Ziel)</div>
+      <div class="kpi-val" id="sideSaved">CHF 0</div>
+      <div class="kpi-sub">3a + Sparkonto</div>
+      <div class="savings-bar-wrap">
+        <div class="savings-bar-track"><div class="savings-bar-fill" id="savingsBar" style="width:0%"></div></div>
       </div>
     </div>
+  </div>
 
-    <ul class="nav-links">
-      <li><a href="#" class="nav-link active" data-view="dashboard">
-        <span class="nav-icon">📊</span> Übersicht 2025
-      </a></li>
-      <li><a href="#" class="nav-link" data-view="transactions">
-        <span class="nav-icon">📋</span> Buchungen
-      </a></li>
-      <li class="nav-sep"></li>
-      <li><a href="#" class="nav-link" data-view="customers">
-        <span class="nav-icon">👥</span> Kunden
-      </a></li>
-      <li><a href="#" class="nav-link" data-view="invoices">
-        <span class="nav-icon">🧾</span> Rechnungen
-      </a></li>
-      <li class="nav-sep"></li>
-      <li><a href="#" class="nav-link" data-view="settings">
-        <span class="nav-icon">⚙️</span> Einstellungen
-      </a></li>
-    </ul>
-
-    <div class="sidebar-footer">
-      <button id="closingBtn" class="btn-closing">
-        📥 Jahresabschluss 2025
-      </button>
-    </div>
+  <nav class="nav">
+    <button class="nav-btn active" data-view="overview"><span class="nav-icon">📊</span> Übersicht</button>
+    <button class="nav-btn" data-view="transactions"><span class="nav-icon">📋</span> Buchungen</button>
+    <button class="nav-btn" data-view="analysis"><span class="nav-icon">📈</span> Analyse</button>
+    <button class="nav-btn" data-view="salary"><span class="nav-icon">💼</span> Lohnrechner</button>
   </nav>
 
-  <main class="content">
+  <div class="budget-settings">
+    <h3>Fixkosten anpassen</h3>
+    <div class="setting-row"><label>Miete</label><input type="number" id="sRent" value="1650" min="0" step="10" /></div>
+    <div class="setting-row"><label>Parkplatz</label><input type="number" id="sPark" value="120" min="0" step="5" /></div>
+    <div class="setting-row"><label>Leasing Auto</label><input type="number" id="sLease" value="226" min="0" step="5" /></div>
+    <div class="setting-note">Skoda Fabia GL-2176772: CHF 211.20 + CHF 15 Occasion = CHF 226.20</div>
+    <div class="setting-row"><label>Krankenkasse</label><input type="number" id="sKK" value="200" min="0" step="10" /></div>
+    <div class="setting-row"><label>Säule 3a</label><input type="number" id="s3a" value="100" min="0" step="10" /></div>
+    <div class="setting-row"><label>Sparziel / Monat</label><input type="number" id="sSave" value="200" min="0" step="50" /></div>
+    <div class="setting-row"><label>Nettolohn (manuell)</label><input type="number" id="sNet" value="3375" min="0" step="50" /></div>
+    <div class="setting-note">Nettolohn anpassen wenn du die genaue Abrechnung hast</div>
+  </div>
+</aside>
 
-    <!-- ── Dashboard ──────────────────────────────────────────── -->
-    <div id="view-dashboard" class="view active">
-      <div class="page-header">
-        <div>
-          <h1>Übersicht 2025</h1>
-          <p class="page-sub">Einnahmen &amp; Ausgaben im Überblick</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn-primary" id="quickAddBtn">+ Neue Buchung</button>
-        </div>
-      </div>
+<!-- ── MAIN ───────────────────────────────────────────────────── -->
+<main class="main">
 
-      <div class="kpi-row">
-        <div class="kpi kpi--income">
-          <div class="kpi-label">Einnahmen 2025</div>
-          <div class="kpi-value" id="kpiIncome">CHF 0.00</div>
-          <div class="kpi-sub" id="kpiIncomeSub"></div>
-        </div>
-        <div class="kpi kpi--expense">
-          <div class="kpi-label">Ausgaben 2025</div>
-          <div class="kpi-value" id="kpiExpense">CHF 0.00</div>
-          <div class="kpi-sub" id="kpiExpenseSub"></div>
-        </div>
-        <div class="kpi kpi--balance">
-          <div class="kpi-label">Gewinn / Verlust</div>
-          <div class="kpi-value" id="kpiBalance">CHF 0.00</div>
-          <div class="kpi-sub" id="kpiBalanceSub"></div>
-        </div>
-        <div class="kpi kpi--neutral">
-          <div class="kpi-label">Offene Rechnungen</div>
-          <div class="kpi-value" id="kpiOpen">CHF 0.00</div>
-          <div class="kpi-sub" id="kpiOpenSub"></div>
-        </div>
-      </div>
+  <!-- ── OVERVIEW ──────────────────────────────────────────── -->
+  <div id="view-overview" class="view active">
+    <div class="page-title">Dein Monatsbudget</div>
+    <div class="page-sub">Thun · Swisscom Mitarbeiter · Kanton Bern</div>
 
-      <div class="charts-row">
-        <div class="card">
-          <h2>Monatsverlauf 2025</h2>
-          <canvas id="monthChart" height="200"></canvas>
-        </div>
-        <div class="card">
-          <h2>Ausgaben nach Kategorie</h2>
-          <canvas id="catChart" height="200"></canvas>
-        </div>
-      </div>
+    <div class="card">
+      <div class="card-title">Budgetplan — Monatlich</div>
+      <table class="budget-table" id="budgetTable">
+        <thead><tr>
+          <th>Position</th><th>Kategorie</th><th class="num">CHF / Monat</th><th class="num">% vom Netto</th>
+        </tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
 
-      <!-- Quick-Add inline -->
-      <div class="card" id="quickAddCard" style="display:none">
-        <h2>Buchung erfassen</h2>
-        <form id="quickForm" class="quick-form">
-          <div class="type-toggle quick-toggle">
-            <button type="button" class="toggle-btn active" data-type="expense">Ausgabe</button>
-            <button type="button" class="toggle-btn" data-type="income">Einnahme</button>
-          </div>
-          <div class="quick-fields">
-            <input type="date"   id="qDate"   required />
-            <input type="number" id="qAmount" step="0.01" min="0.01" placeholder="Betrag CHF" required />
-            <input type="text"   id="qDesc"   placeholder="Beschreibung" required />
-            <select id="qCat" required></select>
-            <select id="qCustomer"><option value="">Kein Kunde</option></select>
-            <button type="submit" class="btn-primary">Speichern</button>
-            <button type="button" id="quickCancelBtn" class="btn-ghost">✕</button>
-          </div>
-        </form>
-      </div>
-
+    <div class="charts-row">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h2 style="margin:0">Letzte Buchungen</h2>
-          <a href="#" class="link-sm" data-view="transactions">Alle anzeigen →</a>
+        <div class="card-title">Ausgaben-Verteilung</div>
+        <canvas id="donutChart" width="300" height="260"></canvas>
+        <div id="donutLegend" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Haushaltsbudget</div>
+        <canvas id="waterfallChart" width="300" height="260"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Budget-Ampel</div>
+      <div id="budgetAmplel"></div>
+    </div>
+  </div>
+
+  <!-- ── TRANSACTIONS ───────────────────────────────────────── -->
+  <div id="view-transactions" class="view">
+    <div class="page-title">Buchungen</div>
+    <div class="page-sub">Einnahmen und Ausgaben erfassen und verwalten</div>
+
+    <div class="card">
+      <div class="card-title">Neue Buchung</div>
+      <div class="type-toggle">
+        <button class="type-btn active exp" data-t="expense">Ausgabe</button>
+        <button class="type-btn inc" data-t="income">Einnahme</button>
+      </div>
+      <form id="txForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Datum</label>
+            <input type="date" id="fDate" required />
+          </div>
+          <div class="form-group">
+            <label>Betrag CHF</label>
+            <input type="number" id="fAmount" step="0.01" min="0.01" placeholder="0.00" required />
+          </div>
+          <div class="form-group fg-2">
+            <label>Beschreibung</label>
+            <input type="text" id="fDesc" placeholder="z.B. Coop, Migros, Benzin…" required />
+          </div>
+          <div class="form-group fg-2">
+            <label>Kategorie</label>
+            <select id="fCat" required></select>
+          </div>
+          <div class="form-group fg-2">
+            <label>Notiz (optional)</label>
+            <input type="text" id="fNote" placeholder="Zusatzinfo" />
+          </div>
         </div>
-        <table class="tx-table" id="recentTable">
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Speichern</button>
+          <button type="button" class="btn-ghost" id="clearFormBtn">Leeren</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="card-title" style="margin:0">Buchungsübersicht</div>
+        <div class="filter-row" style="margin:0">
+          <input type="text" id="searchIn" placeholder="Suchen…" />
+          <select id="filterMonth">
+            <option value="">Alle Monate</option>
+          </select>
+          <select id="filterCat">
+            <option value="">Alle Kategorien</option>
+          </select>
+          <select id="filterType">
+            <option value="">Alle Typen</option>
+            <option value="expense">Ausgaben</option>
+            <option value="income">Einnahmen</option>
+          </select>
+        </div>
+      </div>
+      <div id="summaryStrip" class="summary-strip" style="margin:0 20px;"></div>
+      <div style="overflow-x:auto">
+        <table class="tx-table" id="txTable">
           <thead><tr>
-            <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th>Kunde</th><th class="num">Betrag</th>
+            <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th class="num">Betrag</th><th></th>
           </tr></thead>
           <tbody></tbody>
         </table>
-        <div id="recentEmpty" class="empty-state" style="display:none">
-          Noch keine Buchungen. <a href="#" id="firstBookingLink">Erste Buchung erfassen →</a>
-        </div>
       </div>
-    </div>
-
-    <!-- ── Transactions ───────────────────────────────────────── -->
-    <div id="view-transactions" class="view">
-      <div class="page-header">
-        <div>
-          <h1>Buchungen</h1>
-          <p class="page-sub">Alle Einnahmen und Ausgaben</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn-primary" id="newTxBtn">+ Neue Buchung</button>
-          <button class="btn-secondary-sm" id="exportBtn">↓ CSV</button>
-          <button class="btn-secondary-sm" id="importBtn">↑ CSV</button>
-          <input type="file" id="importFile" accept=".csv" style="display:none" />
-        </div>
-      </div>
-
-      <!-- Inline add/edit form -->
-      <div class="card" id="txFormCard" style="display:none">
-        <h2 id="txFormTitle">Neue Buchung</h2>
-        <form id="txForm">
-          <input type="hidden" id="editId" />
-          <div class="type-toggle" style="margin-bottom:16px">
-            <button type="button" class="toggle-btn active" data-type="expense">Ausgabe</button>
-            <button type="button" class="toggle-btn" data-type="income">Einnahme</button>
-          </div>
-          <div class="form-grid-4">
-            <div class="form-group">
-              <label>Datum</label>
-              <input type="date" id="fDate" required />
-            </div>
-            <div class="form-group">
-              <label>Betrag (CHF)</label>
-              <input type="number" id="fAmount" step="0.01" min="0.01" placeholder="0.00" required />
-            </div>
-            <div class="form-group fg-2">
-              <label>Beschreibung</label>
-              <input type="text" id="fDesc" placeholder="z.B. Miete, Lieferant, Einnahme…" required />
-            </div>
-            <div class="form-group">
-              <label>Kategorie</label>
-              <div class="cat-row">
-                <select id="fCat" required></select>
-                <button type="button" id="newCatBtn" class="btn-icon" title="Neue Kategorie">+</button>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Kunde</label>
-              <select id="fCustomer"><option value="">— kein —</option></select>
-            </div>
-            <div class="form-group fg-2">
-              <label>Notiz</label>
-              <input type="text" id="fNote" placeholder="Optional" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" id="submitBtn">Speichern</button>
-            <button type="button" class="btn-ghost" id="cancelEdit">Abbrechen</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Filters -->
-      <div class="filter-bar-card">
-        <input type="text"   id="searchInput"  placeholder="🔍 Suchen…" />
-        <select id="filterType">
-          <option value="">Alle</option>
-          <option value="income">Einnahmen</option>
-          <option value="expense">Ausgaben</option>
-        </select>
-        <select id="filterCat"><option value="">Alle Kategorien</option></select>
-        <select id="filterYear">
-          <option value="2025" selected>2025</option>
-          <option value="2024">2024</option>
-          <option value="2026">2026</option>
-          <option value="all">Alle Jahre</option>
-        </select>
-        <select id="filterMonth">
-          <option value="">Alle Monate</option>
-          <option value="01">Januar</option><option value="02">Februar</option>
-          <option value="03">März</option><option value="04">April</option>
-          <option value="05">Mai</option><option value="06">Juni</option>
-          <option value="07">Juli</option><option value="08">August</option>
-          <option value="09">September</option><option value="10">Oktober</option>
-          <option value="11">November</option><option value="12">Dezember</option>
-        </select>
-      </div>
-
-      <div class="tx-summary-bar" id="txSummaryBar"></div>
-
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="tx-table" id="allTable">
-          <thead><tr>
-            <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th>Kunde</th>
-            <th class="num">Betrag</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="emptyState" class="empty-state">Keine Buchungen gefunden.</div>
-      </div>
-    </div>
-
-    <!-- ── Customers ──────────────────────────────────────────── -->
-    <div id="view-customers" class="view">
-      <div class="page-header">
-        <div><h1>Kunden</h1><p class="page-sub">Kontakt- und Firmendaten</p></div>
-        <button class="btn-primary" id="newCustomerBtn">+ Neuer Kunde</button>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="tx-table" id="customerTable">
-          <thead><tr>
-            <th>Firma</th><th>Ansprechpartner</th><th>E-Mail</th><th>Telefon</th><th>Ort</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="custEmptyState" class="empty-state">Noch keine Kunden erfasst.</div>
-      </div>
-    </div>
-
-    <!-- ── Invoices ───────────────────────────────────────────── -->
-    <div id="view-invoices" class="view">
-      <div class="page-header">
-        <div><h1>Rechnungen</h1><p class="page-sub">Erstellen &amp; als PDF herunterladen</p></div>
-        <button class="btn-primary" id="newInvoiceBtn">+ Neue Rechnung</button>
-      </div>
-
-      <!-- Inline invoice form -->
-      <div class="card" id="invFormCard" style="display:none">
-        <h2 id="invFormTitle">Neue Rechnung</h2>
-        <form id="invForm">
-          <input type="hidden" id="invEditId" />
-          <div class="form-grid-4" style="margin-bottom:16px">
-            <div class="form-group">
-              <label>Rechnungsnr.</label>
-              <input type="text" id="invNumber" required />
-            </div>
-            <div class="form-group">
-              <label>Datum</label>
-              <input type="date" id="invDate" required />
-            </div>
-            <div class="form-group">
-              <label>Fällig am</label>
-              <input type="date" id="invDue" required />
-            </div>
-            <div class="form-group">
-              <label>Kunde *</label>
-              <select id="invCustomer" required><option value="">— wählen —</option></select>
-            </div>
-            <div class="form-group fg-4">
-              <label>Betreff</label>
-              <input type="text" id="invSubject" placeholder="z.B. Webdesign April 2025" required />
-            </div>
-          </div>
-
-          <div class="lines-header">
-            <span>Positionen</span>
-            <button type="button" id="addLineBtn" class="btn-ghost-sm">+ Position</button>
-          </div>
-          <div class="lines-wrap">
-            <table class="tx-table line-table">
-              <thead><tr>
-                <th>Beschreibung</th>
-                <th class="num" style="width:80px">Menge</th>
-                <th class="num" style="width:110px">Preis CHF</th>
-                <th class="num" style="width:75px">MwSt %</th>
-                <th class="num" style="width:110px">Total</th>
-                <th style="width:36px"></th>
-              </tr></thead>
-              <tbody id="lineItems"></tbody>
-            </table>
-          </div>
-          <div class="inv-totals">
-            <div class="inv-total-row"><span>Netto</span><span id="invNet">CHF 0.00</span></div>
-            <div class="inv-total-row"><span>MwSt</span><span id="invVat">CHF 0.00</span></div>
-            <div class="inv-total-row inv-total-bold"><span>Total CHF</span><span id="invTotal">0.00</span></div>
-          </div>
-
-          <div class="form-group" style="margin-top:16px">
-            <label>Zahlungsbedingungen / Notiz</label>
-            <textarea id="invNotes" rows="2" placeholder="Zahlbar innerhalb 30 Tagen."></textarea>
-          </div>
-          <div class="form-actions" style="margin-top:16px">
-            <button type="submit" class="btn-primary" id="invSubmitBtn">Speichern</button>
-            <button type="button" class="btn-ghost" id="invCancelBtn">Abbrechen</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="tx-table" id="invoiceTable">
-          <thead><tr>
-            <th>Nr.</th><th>Datum</th><th>Kunde</th><th>Betreff</th>
-            <th>Fällig</th><th class="num">Total</th><th>Status</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="invEmptyState" class="empty-state">Noch keine Rechnungen vorhanden.</div>
-      </div>
-    </div>
-
-    <!-- ── Settings ───────────────────────────────────────────── -->
-    <div id="view-settings" class="view">
-      <div class="page-header">
-        <div><h1>Einstellungen</h1><p class="page-sub">Firmendaten für Rechnungen und PDF</p></div>
-      </div>
-      <div class="card form-card" style="max-width:540px">
-        <form id="settingsForm">
-          <div class="form-grid" style="gap:14px;margin-bottom:20px">
-            <div class="form-group span-2">
-              <label>Firmenname</label>
-              <input type="text" id="sFirma" placeholder="Zimtwelt" />
-            </div>
-            <div class="form-group span-2">
-              <label>Strasse &amp; Nr.</label>
-              <input type="text" id="sStreet" placeholder="Musterstrasse 12" />
-            </div>
-            <div class="form-group">
-              <label>PLZ</label>
-              <input type="text" id="sZip" placeholder="8000" />
-            </div>
-            <div class="form-group">
-              <label>Ort</label>
-              <input type="text" id="sCity" placeholder="Zürich" />
-            </div>
-            <div class="form-group span-2">
-              <label>E-Mail</label>
-              <input type="email" id="sEmail" placeholder="info@zimtwelt.ch" />
-            </div>
-            <div class="form-group span-2">
-              <label>Telefon</label>
-              <input type="tel" id="sPhone" placeholder="+41 44 000 00 00" />
-            </div>
-            <div class="form-group span-2">
-              <label>Website</label>
-              <input type="text" id="sWeb" placeholder="www.zimtwelt.ch" />
-            </div>
-            <div class="form-group span-2">
-              <label>UID / MwSt-Nr.</label>
-              <input type="text" id="sUid" placeholder="CHE-123.456.789 MWST" />
-            </div>
-            <div class="form-group span-2">
-              <label>IBAN</label>
-              <input type="text" id="sIban" placeholder="CH56 0483 5012 3456 7800 9" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Speichern</button>
-          </div>
-        </form>
-        <div id="settingsSaved" class="save-toast" style="display:none">✓ Gespeichert</div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<!-- Dialogs -->
-<div id="dialog" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <p id="dialogMsg">Wirklich löschen?</p>
-    <div class="dialog-actions">
-      <button id="dialogConfirm" class="btn-danger">Löschen</button>
-      <button id="dialogCancel" class="btn-ghost">Abbrechen</button>
+      <div id="txEmpty" class="empty" style="display:none">Noch keine Buchungen erfasst.</div>
     </div>
   </div>
-</div>
 
-<div id="catDialog" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <p>Neue Kategorie</p>
-    <input type="text" id="newCatInput" placeholder="Kategoriename" style="width:100%;margin:12px 0" />
-    <div class="dialog-actions">
-      <button id="catDialogOk" class="btn-primary">Hinzufügen</button>
-      <button id="catDialogCancel" class="btn-ghost">Abbrechen</button>
-    </div>
-  </div>
-</div>
+  <!-- ── ANALYSIS ───────────────────────────────────────────── -->
+  <div id="view-analysis" class="view">
+    <div class="page-title">Analyse</div>
+    <div class="page-sub">Monatsverlauf und Kategorien im Detail</div>
 
-<div id="custDialog" class="dialog-overlay" style="display:none">
-  <div class="dialog-box" style="min-width:460px">
-    <p id="custDialogTitle">Neuer Kunde</p>
-    <form id="custForm" style="margin-top:14px">
-      <input type="hidden" id="custEditId" />
-      <div class="form-grid" style="gap:12px;margin-bottom:0">
-        <div class="form-group span-2">
-          <label>Firma</label>
-          <input type="text" id="cFirma" placeholder="Muster GmbH" />
-        </div>
-        <div class="form-group">
-          <label>Vorname</label>
-          <input type="text" id="cFirst" />
-        </div>
-        <div class="form-group">
-          <label>Nachname</label>
-          <input type="text" id="cLast" />
-        </div>
-        <div class="form-group span-2">
-          <label>Strasse</label>
-          <input type="text" id="cStreet" />
-        </div>
-        <div class="form-group">
-          <label>PLZ</label>
-          <input type="text" id="cZip" />
-        </div>
-        <div class="form-group">
-          <label>Ort</label>
-          <input type="text" id="cCity" />
-        </div>
-        <div class="form-group">
-          <label>Land</label>
-          <input type="text" id="cCountry" value="Schweiz" />
-        </div>
-        <div class="form-group">
-          <label>Telefon</label>
-          <input type="tel" id="cPhone" />
-        </div>
-        <div class="form-group span-2">
-          <label>E-Mail</label>
-          <input type="email" id="cEmail" />
-        </div>
-        <div class="form-group span-2">
-          <label>UID / MwSt-Nr.</label>
-          <input type="text" id="cUid" />
-        </div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-title">Einnahmen vs. Ausgaben — Monatsverlauf</div>
+        <canvas id="barChart" width="400" height="260"></canvas>
       </div>
-    </form>
-    <div class="dialog-actions" style="margin-top:16px">
-      <button id="custDialogOk" class="btn-primary">Speichern</button>
-      <button id="custDialogCancel" class="btn-ghost">Abbrechen</button>
+      <div class="card">
+        <div class="card-title">Top Ausgabe-Kategorien</div>
+        <canvas id="hbarChart" width="400" height="260"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Monatsdetail</div>
+      <div class="month-nav">
+        <button id="prevMonth">&#8249;</button>
+        <div class="month-label" id="monthLabel"></div>
+        <button id="nextMonth">&#8250;</button>
+      </div>
+      <div id="monthDetail"></div>
     </div>
   </div>
-</div>
 
-<div id="invStatusDialog" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <p>Rechnungsstatus</p>
-    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-      <button class="status-pick" data-status="draft">📝 Entwurf</button>
-      <button class="status-pick" data-status="sent">📤 Versendet</button>
-      <button class="status-pick" data-status="paid">✅ Bezahlt</button>
-      <button class="status-pick" data-status="overdue">⚠️ Überfällig</button>
+  <!-- ── SALARY ─────────────────────────────────────────────── -->
+  <div id="view-salary" class="view">
+    <div class="page-title">Lohnrechner Bern</div>
+    <div class="page-sub">Geschätzte Abzüge für Swisscom-Mitarbeiter, Kanton Bern</div>
+
+    <div class="card" style="max-width:560px">
+      <div class="card-title">Bruttolohn &rarr; Nettolohn</div>
+      <div id="salaryBreakdown"></div>
+      <div class="salary-note" id="salaryNote"></div>
     </div>
-    <div class="dialog-actions" style="margin-top:12px">
-      <button id="invStatusCancel" class="btn-ghost">Abbrechen</button>
+
+    <div class="card" style="max-width:560px">
+      <div class="card-title">Jahresplan — Sparen &amp; Steuern</div>
+      <div id="yearPlan"></div>
     </div>
   </div>
+
+</main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
+<script>
+'use strict';
+
+const SK = 'budget_thun_v1';
+const load = () => JSON.parse(localStorage.getItem(SK) || '{"tx":[]}');
+const persist = () => localStorage.setItem(SK, JSON.stringify(state));
+
+let state = load();
+if (!state.tx) state.tx = [];
+
+const settings = {
+  rent:  () => +document.getElementById('sRent').value  || 1650,
+  park:  () => +document.getElementById('sPark').value  || 120,
+  lease: () => +document.getElementById('sLease').value || 226,
+  kk:    () => +document.getElementById('sKK').value    || 200,
+  s3a:   () => +document.getElementById('s3a').value    || 100,
+  save:  () => +document.getElementById('sSave').value  || 200,
+  net:   () => +document.getElementById('sNet').value   || 3375,
+};
+
+document.querySelectorAll('.sidebar input[type="number"]').forEach(i =>
+  i.addEventListener('input', () => { renderAll(); })
+);
+
+const CATS_EXP = [
+  'Miete & Wohnen','Leasing & Auto','Versicherungen','Lebensmittel',
+  'Restaurants & Ausgang','Kleider & Shopping','Transport & Benzin',
+  'Freizeit & Hobby','Handy & Abo','Körperpflege','Sonstiges'
+];
+const CATS_INC = ['Lohn','Bonus','Sonstiges Einkommen'];
+let curType = 'expense';
+
+function populateCatSelect() {
+  const sel = document.getElementById('fCat');
+  const cats = curType === 'expense' ? CATS_EXP : CATS_INC;
+  sel.innerHTML = cats.map(c => '<option>' + c + '</option>').join('');
+}
+
+function updateFilterCats() {
+  const sel = document.getElementById('filterCat');
+  const cur = sel.value;
+  const all = [...new Set(state.tx.map(t => t.cat))].sort();
+  sel.innerHTML = '<option value="">Alle Kategorien</option>' +
+    all.map(c => '<option' + (c===cur?' selected':'') + '>' + c + '</option>').join('');
+}
+
+function updateFilterMonths() {
+  const sel = document.getElementById('filterMonth');
+  const cur = sel.value;
+  const months = [...new Set(state.tx.map(t => t.date.slice(0,7)))].sort().reverse();
+  sel.innerHTML = '<option value="">Alle Monate</option>' +
+    months.map(m => {
+      const [y,mo] = m.split('-');
+      const label = new Date(+y, +mo-1, 1).toLocaleDateString('de-CH',{month:'long',year:'numeric'});
+      return '<option value="' + m + '"' + (m===cur?' selected':'') + '>' + label + '</option>';
+    }).join('');
+}
+
+document.querySelectorAll('.type-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    curType = b.dataset.t;
+    document.querySelectorAll('.type-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    populateCatSelect();
+  });
+});
+
+const fDate = document.getElementById('fDate');
+fDate.value = today();
+
+document.getElementById('txForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const tx = {
+    id: uid(),
+    type: curType,
+    date: fDate.value,
+    amount: parseFloat(document.getElementById('fAmount').value),
+    desc: document.getElementById('fDesc').value.trim(),
+    cat: document.getElementById('fCat').value,
+    note: document.getElementById('fNote').value.trim(),
+  };
+  state.tx.unshift(tx);
+  persist();
+  document.getElementById('txForm').reset();
+  fDate.value = today();
+  renderAll();
+});
+
+document.getElementById('clearFormBtn').addEventListener('click', () => {
+  document.getElementById('txForm').reset();
+  fDate.value = today();
+});
+
+document.querySelectorAll('.nav-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('view-'+b.dataset.view).classList.add('active');
+    renderAll();
+  });
+});
+
+const themeBtn = document.getElementById('themeBtn');
+let dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+function applyTheme() {
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  themeBtn.textContent = dark ? '☀️ Hell' : '🌙 Dark';
+}
+themeBtn.addEventListener('click', () => { dark = !dark; applyTheme(); renderAll(); });
+applyTheme();
+
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function today() { return new Date().toISOString().slice(0,10); }
+function fmt(v) { return 'CHF '+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,"'"); }
+function fmtK(v) { return 'CHF '+v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,"'"); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatDate(iso) { const [y,m,d]=iso.split('-'); return d+'.'+m+'.'+y; }
+function getCSS(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function monthStr(isoYM) {
+  const [y,m] = isoYM.split('-');
+  return new Date(+y,+m-1,1).toLocaleDateString('de-CH',{month:'long',year:'numeric'});
+}
+
+function renderAll() {
+  renderSidebar();
+  renderBudgetTable();
+  renderDonut();
+  renderWaterfall();
+  renderAmplel();
+  renderTxTable();
+  renderBar();
+  renderHBar();
+  renderSalary();
+  renderMonthDetail();
+}
+
+function renderSidebar() {
+  const net = settings.net();
+  const fixed = settings.rent()+settings.park()+settings.lease()+settings.kk()+settings.s3a()+settings.save();
+  const budget = net - fixed;
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const thisMonth = state.tx.filter(t => t.date.startsWith(ym));
+  const spent = thisMonth.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const saved = (settings.s3a()+settings.save());
+  const free = budget - spent;
+  const pct = budget > 0 ? Math.min(100, (spent/budget*100)) : 0;
+  document.getElementById('sideNet').textContent = fmtK(net);
+  document.getElementById('sideSpent').textContent = fmt(spent);
+  document.getElementById('sideSpentSub').textContent = 'von Budget ' + fmt(budget);
+  document.getElementById('sideFree').textContent = fmt(free);
+  document.getElementById('sideFreeSub').textContent = pct > 90 ? '⚠️ Fast aufgebraucht!' : pct > 70 ? 'Im Bereich' : '✓ Gut';
+  document.getElementById('sideSaved').textContent = fmt(saved);
+  document.getElementById('savingsBar').style.width = Math.min(100, (saved/(net*0.2)*100))+'%';
+}
+
+function renderBudgetTable() {
+  const net = settings.net();
+  const rows = [
+    { label:'Nettolohn', cat:'Einnahme', amt: net, type:'inc' },
+    { label:'Miete', cat:'Wohnen', amt:-settings.rent(), type:'exp' },
+    { label:'Parkplatz', cat:'Wohnen', amt:-settings.park(), type:'exp' },
+    { label:'Leasing Auto', cat:'Mobilität', amt:-settings.lease(), type:'exp' },
+    { label:'Krankenkasse', cat:'Versicherung', amt:-settings.kk(), type:'exp' },
+    { label:'Säule 3a', cat:'Vorsorge', amt:-settings.s3a(), type:'sav' },
+    { label:'Sparziel', cat:'Sparen', amt:-settings.save(), type:'sav' },
+  ];
+  const fixed = rows.slice(1).reduce((s,r)=>s+r.amt,0);
+  const freeAmt = net + fixed;
+  const tbody = document.querySelector('#budgetTable tbody');
+  tbody.innerHTML = rows.map(r => '<tr><td>'+esc(r.label)+'</td><td><span class="cat-chip">'+esc(r.cat)+'</span></td><td class="num '+r.type+'">'+(r.amt>0?'+':'')+fmt(Math.abs(r.amt))+'</td><td class="num '+r.type+'">'+(Math.abs(r.amt)/net*100).toFixed(1)+'%</td></tr>').join('');
+  const tfoot = document.querySelector('#budgetTable tfoot');
+  const cls = freeAmt >= 0 ? 'inc' : 'exp';
+  tfoot.innerHTML = '<tr class="total-row"><td colspan="2">Frei verfügbar (Lebenshaltung)</td><td class="num '+cls+'">'+(freeAmt>=0?'+':'')+fmt(Math.abs(freeAmt))+'</td><td class="num '+cls+'">'+(Math.abs(freeAmt)/net*100).toFixed(1)+'%</td></tr>';
+  const suggestions = [
+    { label:'→ Lebensmittel (Empfehlung)', amt: Math.min(350, freeAmt*0.37) },
+    { label:'→ Handy & Abo', amt: 50 },
+    { label:'→ Freizeit & Ausgang', amt: Math.min(200, freeAmt*0.22) },
+    { label:'→ Körperpflege & Kleider', amt: Math.min(100, freeAmt*0.12) },
+    { label:'→ Puffer / Unvorhergesehenes', amt: null },
+  ];
+  let used = suggestions.slice(0,-1).reduce((s,r)=>s+(r.amt||0),0);
+  suggestions[suggestions.length-1].amt = Math.max(0, freeAmt - used);
+  tfoot.innerHTML += suggestions.map(r=>'<tr><td style="color:var(--muted);padding-left:24px;font-size:12.5px">'+esc(r.label)+'</td><td></td><td class="num" style="color:var(--muted);font-size:12.5px">'+(r.amt!==null?fmt(r.amt):'')+'</td><td></td></tr>').join('');
+}
+
+function renderAmplel() {
+  const net = settings.net();
+  const rent = settings.rent();
+  const rentPct = rent/net*100;
+  const fixed = settings.rent()+settings.park()+settings.lease()+settings.kk()+settings.s3a()+settings.save();
+  const fixedPct = fixed/net*100;
+  const savePct = (settings.s3a()+settings.save())/net*100;
+  const free = net - fixed;
+  const items = [
+    { label:'Miete', val:fmt(rent), sub:rentPct.toFixed(0)+'% vom Netto', ok: rentPct<=33, warn: rentPct<=40, msg: rentPct<=33?'✓ Im grünen Bereich (unter 33%)':rentPct<=40?'⚠ Etwas hoch (30-40%)':'⚠ Hoch (über 40%) — ggf. WG prüfen' },
+    { label:'Fixkosten total', val:fmt(fixed), sub:fixedPct.toFixed(0)+'% vom Netto', ok: fixedPct<=75, warn: fixedPct<=85, msg: fixedPct<=75?'✓ Solide Fixkostenquote':fixedPct<=85?'⚠ Wenig Spielraum für Variable':'❌ Wenig Luft — Fixkosten reduzieren' },
+    { label:'Sparquote', val:fmt(settings.s3a()+settings.save()), sub:savePct.toFixed(0)+'% vom Netto', ok: savePct>=10, warn: savePct>=5, msg: savePct>=15?'✓ Sehr gute Sparquote!':savePct>=10?'✓ Empfehlung erreicht (10%)':savePct>=5?'⚠ Unter Empfehlung — 10% anstreben':'❌ Zu wenig Sparen' },
+    { label:'Freies Budget', val:fmt(free), sub:'für Lebenshaltung', ok: free>=800, warn: free>=500, msg: free>=800?'✓ Komfortabler Handlungsspielraum':free>=500?'⚠ Knapp, aber machbar':'❌ Sehr eng — Fixkosten prüfen' },
+  ];
+  document.getElementById('budgetAmplel').innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">' +
+    items.map(it => '<div style="padding:14px 16px;border-radius:9px;background:var(--surface);border-left:4px solid '+(it.ok?'var(--income)':it.warn?'var(--warning)':'var(--expense)')+'">' +
+      '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">'+esc(it.label)+'</div>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:18px;color:var(--text)">'+esc(it.val)+'</div>' +
+      '<div style="font-size:11.5px;color:var(--muted);margin:2px 0">'+esc(it.sub)+'</div>' +
+      '<div style="font-size:12.5px;margin-top:6px;color:'+(it.ok?'var(--income)':it.warn?'var(--warning)':'var(--expense)')+';">'+esc(it.msg)+'</div></div>').join('') +
+    '</div>';
+}
+
+function renderTxTable() {
+  updateFilterCats();
+  updateFilterMonths();
+  const search = document.getElementById('searchIn').value.toLowerCase();
+  const month  = document.getElementById('filterMonth').value;
+  const cat    = document.getElementById('filterCat').value;
+  const type   = document.getElementById('filterType').value;
+  let filtered = state.tx.filter(t => {
+    if (month && !t.date.startsWith(month)) return false;
+    if (cat   && t.cat !== cat) return false;
+    if (type  && t.type !== type) return false;
+    if (search && !(t.desc+t.cat+t.note).toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const inc = filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp = filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const strip = document.getElementById('summaryStrip');
+  strip.innerHTML = filtered.length
+    ? '<span>'+filtered.length+' Einträge</span><span class="inc-val">+'+fmt(inc)+'</span><span style="color:var(--border)">|</span><span class="exp-val">-'+fmt(exp)+'</span><span style="color:var(--border)">|</span><span class="bal-val">= '+fmt(inc-exp)+'</span>'
+    : '';
+  const tbody = document.querySelector('#txTable tbody');
+  tbody.innerHTML = '';
+  const empty = document.getElementById('txEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+  filtered.forEach(t => {
+    const tr = document.createElement('tr');
+    const sign = t.type==='income' ? '+' : '-';
+    tr.innerHTML = '<td style="white-space:nowrap">'+formatDate(t.date)+'</td><td>'+esc(t.desc)+(t.note?'<br><small style="color:var(--muted)">'+esc(t.note)+'</small>':'')+'</td><td><span class="chip chip-cat">'+esc(t.cat)+'</span> <span class="chip chip-'+(t.type==='expense'?'exp':'inc')+'">'+(t.type==='expense'?'Ausgabe':'Einnahme')+'</span></td><td class="num '+(t.type==='expense'?'exp-val':'inc-val')+'">'+sign+fmt(t.amount)+'</td><td><button class="del-btn" data-id="'+t.id+'" title="Löschen">🗑</button></td>';
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => {
+    state.tx = state.tx.filter(t => t.id !== b.dataset.id);
+    persist();
+    renderAll();
+  }));
+}
+
+['searchIn','filterMonth','filterCat','filterType'].forEach(id =>
+  document.getElementById(id).addEventListener('input', renderTxTable)
+);
+
+function clearCanvas(id) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  return {c, ctx, W:c.offsetWidth||c.width, H:c.height};
+}
+function tv(v) { return getCSS(v); }
+
+function renderDonut() {
+  const {c,ctx} = clearCanvas('donutChart');
+  const W = c.offsetWidth || 300, H = 260;
+  c.width = W; c.height = H;
+  const net = settings.net();
+  const slices = [
+    { label:'Miete', val:settings.rent(), color:'#2D5BE3' },
+    { label:'Leasing', val:settings.lease(), color:'#C5392B' },
+    { label:'Krankenkasse', val:settings.kk(), color:'#E09020' },
+    { label:'Parkplatz', val:settings.park(), color:'#6D3FC0' },
+    { label:'3a + Sparen', val:settings.s3a()+settings.save(), color:'#1A7A50' },
+    { label:'Lebenshaltung', val:Math.max(0, net-settings.rent()-settings.park()-settings.lease()-settings.kk()-settings.s3a()-settings.save()), color:'#5C6580' },
+  ].filter(s=>s.val>0);
+  const total = slices.reduce((s,x)=>s+x.val,0);
+  const cx=W/2, cy=H/2-10, r=Math.min(W,H)/2-30, ri=r*0.55;
+  let angle = -Math.PI/2;
+  slices.forEach(s => {
+    const sweep = (s.val/total)*2*Math.PI;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle = s.color; ctx.fill();
+    ctx.strokeStyle = tv('--card'); ctx.lineWidth = 2; ctx.stroke();
+    angle += sweep;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,ri,0,2*Math.PI); ctx.fillStyle = tv('--card'); ctx.fill();
+  ctx.fillStyle = tv('--text'); ctx.font = "700 14px 'Syne',sans-serif"; ctx.textAlign = 'center';
+  ctx.fillText('Netto', cx, cy-4);
+  ctx.font = "600 12px 'DM Sans',sans-serif"; ctx.fillStyle = tv('--income');
+  ctx.fillText(fmtK(net), cx, cy+14);
+  const leg = document.getElementById('donutLegend');
+  leg.innerHTML = slices.map(s=>'<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:10px;height:10px;border-radius:2px;background:'+s.color+';display:inline-block;flex-shrink:0"></span><span style="color:var(--muted)">'+esc(s.label)+'</span><span style="font-weight:600;color:var(--text)">'+fmt(s.val)+'</span></div>').join('');
+}
+
+function renderWaterfall() {
+  const {c,ctx} = clearCanvas('waterfallChart');
+  const W = c.offsetWidth||300, H=260;
+  c.width=W; c.height=H;
+  const net = settings.net();
+  const items = [
+    { label:'Netto', val:net, color:tv('--income') },
+    { label:'Miete+PP', val:settings.rent()+settings.park(), color:tv('--expense') },
+    { label:'Leasing', val:settings.lease(), color:tv('--expense') },
+    { label:'KK', val:settings.kk(), color:tv('--warning') },
+    { label:'3a+Sparen', val:settings.s3a()+settings.save(), color:tv('--savings') },
+    { label:'Frei', val:Math.max(0,net-settings.rent()-settings.park()-settings.lease()-settings.kk()-settings.s3a()-settings.save()), color:tv('--accent') },
+  ];
+  const maxVal = net;
+  const pad=14, bw=(W-pad*2)/items.length-6, barH=H-60;
+  items.forEach((it,i)=>{
+    const x = pad + i*(bw+6);
+    const h = (it.val/maxVal)*barH;
+    const y = H-30-h;
+    ctx.fillStyle = it.color;
+    roundRect(ctx, x, y, bw, h, 4); ctx.fill();
+    ctx.fillStyle = tv('--muted'); ctx.font = '10px "DM Sans",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(it.label, x+bw/2, H-14);
+    ctx.fillStyle = tv('--text'); ctx.font = '600 10px "DM Sans",sans-serif';
+    ctx.fillText(it.val>=1000?(it.val/1000).toFixed(1)+'k':it.val, x+bw/2, y-4);
+  });
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
+
+function renderBar() {
+  const {c,ctx} = clearCanvas('barChart');
+  const W=c.offsetWidth||400, H=260;
+  c.width=W; c.height=H;
+  const months=[];
+  const now=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const ym=d.toISOString().slice(0,7);
+    const label=d.toLocaleDateString('de-CH',{month:'short'});
+    const inc=state.tx.filter(t=>t.type==='income'&&t.date.startsWith(ym)).reduce((s,t)=>s+t.amount,0);
+    const exp=state.tx.filter(t=>t.type==='expense'&&t.date.startsWith(ym)).reduce((s,t)=>s+t.amount,0);
+    months.push({label,inc,exp});
+  }
+  const maxV=Math.max(...months.map(m=>Math.max(m.inc,m.exp)),100);
+  const pad=14, barH=H-55, gw=(W-pad*2)/months.length, bw=gw*0.35;
+  months.forEach((m,i)=>{
+    const x=pad+i*gw+gw/2;
+    const ih=(m.inc/maxV)*barH;
+    const eh=(m.exp/maxV)*barH;
+    if(m.inc>0){ ctx.fillStyle=tv('--income'); roundRect(ctx,x-bw-2,H-35-ih,bw,ih,3); ctx.fill(); }
+    if(m.exp>0){ ctx.fillStyle=tv('--expense'); roundRect(ctx,x+2,H-35-eh,bw,eh,3); ctx.fill(); }
+    ctx.fillStyle=tv('--muted'); ctx.font='10px "DM Sans",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(m.label,x,H-18);
+  });
+  const ly=H-6;
+  [[tv('--income'),'Einnahmen'],[tv('--expense'),'Ausgaben']].forEach(([col,lbl],i)=>{
+    const x=pad+i*110;
+    ctx.fillStyle=col; ctx.fillRect(x,ly-8,10,8);
+    ctx.fillStyle=tv('--muted'); ctx.font='11px "DM Sans",sans-serif'; ctx.textAlign='left';
+    ctx.fillText(lbl,x+14,ly);
+  });
+}
+
+function renderHBar() {
+  const {c,ctx} = clearCanvas('hbarChart');
+  const W=c.offsetWidth||400, H=260;
+  c.width=W; c.height=H;
+  const bycat={};
+  state.tx.filter(t=>t.type==='expense').forEach(t=>{ bycat[t.cat]=(bycat[t.cat]||0)+t.amount; });
+  const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  if(!sorted.length){
+    ctx.fillStyle=tv('--muted'); ctx.font='13px "DM Sans",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Noch keine Ausgaben',W/2,H/2); return;
+  }
+  const maxV=sorted[0][1];
+  const rowH=H/sorted.length, barMaxW=W-130;
+  const palette=['#2D5BE3','#C5392B','#E09020','#6D3FC0','#1A7A50','#5C6580','#C97800'];
+  sorted.forEach(([cat,val],i)=>{
+    const y=i*rowH+rowH/2;
+    const bw=(val/maxV)*barMaxW;
+    ctx.fillStyle=palette[i%palette.length]+'44';
+    roundRect(ctx,110,y-10,barMaxW,20,4); ctx.fill();
+    ctx.fillStyle=palette[i%palette.length];
+    roundRect(ctx,110,y-10,bw,20,4); ctx.fill();
+    ctx.fillStyle=tv('--text'); ctx.font='12px "DM Sans",sans-serif'; ctx.textAlign='right';
+    ctx.fillText(cat.length>16?cat.slice(0,14)+'…':cat,104,y+4);
+    ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.font='600 11px "DM Sans",sans-serif';
+    if(bw>60) ctx.fillText(fmt(val).replace('CHF ',''),118,y+4);
+    else { ctx.fillStyle=tv('--text'); ctx.fillText(fmt(val).replace('CHF ',''),118+bw+4,y+4); }
+  });
+}
+
+function renderSalary() {
+  const gross = 4500;
+  const deductions = [
+    { label:'AHV / IV / EO',  pct:5.30, amt:gross*0.053 },
+    { label:'ALV',             pct:1.10, amt:gross*0.011 },
+    { label:'BVG (Pension)',   pct:7.00, amt:gross*0.070, note:'je nach Plan' },
+    { label:'NBUV',            pct:1.00, amt:gross*0.010, note:'Nichtberufsunfall' },
+    { label:'Quellensteuer A', pct:10.60,amt:gross*0.106, note:'Ledig, Kt. Bern' },
+  ];
+  const totalDed = deductions.reduce((s,d)=>s+d.amt,0);
+  const net = gross - totalDed;
+  document.getElementById('salaryBreakdown').innerHTML =
+    '<div class="salary-row"><span>Bruttolohn</span><span style="font-weight:700;color:var(--income)">'+fmt(gross)+'</span></div>' +
+    deductions.map(d=>'<div class="salary-row deduct"><span class="deduct-label">'+esc(d.label)+'<span class="deduct-pct">'+d.pct.toFixed(2)+'%</span>'+(d.note?'<small style="color:var(--muted)">'+esc(d.note)+'</small>':'')+'</span><span>-'+fmt(d.amt)+'</span></div>').join('') +
+    '<div class="salary-row total"><span>Nettolohn (geschätzt)</span><span>'+fmt(net)+'</span></div>';
+  document.getElementById('salaryNote').innerHTML =
+    '<strong>⚠ Schätzung:</strong> BVG und Quellensteuer variieren je nach Pensionskassenplan, Konfession, Tarif und exaktem Lohn. Sobald du die erste Abrechnung von Swisscom hast, trage den genauen Nettobetrag oben links unter «Nettolohn (manuell)» ein.';
+  const yearNet = net * 12;
+  const yearSave = (settings.s3a() + settings.save()) * 12;
+  document.getElementById('yearPlan').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+    [
+      {l:'Nettolohn / Jahr',v:net*12,c:'var(--income)'},
+      {l:'Fixkosten / Jahr',v:(settings.rent()+settings.park()+settings.lease()+settings.kk())*12,c:'var(--expense)'},
+      {l:'Säule 3a / Jahr',v:settings.s3a()*12,c:'var(--savings)'},
+      {l:'Sparkonto / Jahr',v:settings.save()*12,c:'var(--savings)'},
+      {l:'Gesamtersparnis / Jahr',v:yearSave,c:'var(--savings)'},
+      {l:'Sparquote',v:null,extra:(yearSave/yearNet*100).toFixed(1)+'%',c:'var(--accent)'},
+    ].map(it=>'<div style="padding:12px 14px;background:var(--surface);border-radius:8px"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">'+esc(it.l)+'</div><div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:17px;color:'+it.c+'">'+(it.v!==null?fmtK(it.v):it.extra)+'</div></div>').join('') +
+    '</div>';
+}
+
+let detailMonth = new Date().toISOString().slice(0,7);
+
+function renderMonthDetail() {
+  document.getElementById('monthLabel').textContent = monthStr(detailMonth);
+  const txs = state.tx.filter(t=>t.date.startsWith(detailMonth)).sort((a,b)=>b.date.localeCompare(a.date));
+  const inc = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const div = document.getElementById('monthDetail');
+  if(!txs.length){ div.innerHTML='<div class="empty">Keine Buchungen in diesem Monat</div>'; return; }
+  div.innerHTML = '<div class="summary-strip" style="margin-bottom:12px"><span class="inc-val">Einnahmen +'+fmt(inc)+'</span><span class="exp-val">Ausgaben -'+fmt(exp)+'</span><span class="bal-val">Saldo '+fmt(inc-exp)+'</span></div>' +
+    '<div style="overflow-x:auto"><table class="tx-table"><thead><tr><th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th class="num">Betrag</th></tr></thead><tbody>' +
+    txs.map(t=>'<tr><td style="white-space:nowrap">'+formatDate(t.date)+'</td><td>'+esc(t.desc)+'</td><td><span class="chip chip-cat">'+esc(t.cat)+'</span></td><td class="num '+(t.type==='expense'?'exp-val':'inc-val')+'">'+(t.type==='expense'?'-':'+')+' '+fmt(t.amount)+'</td></tr>').join('') +
+    '</tbody></table></div>';
+}
+
+document.getElementById('prevMonth').addEventListener('click', () => {
+  const d=new Date(detailMonth+'-01');
+  d.setMonth(d.getMonth()-1);
+  detailMonth=d.toISOString().slice(0,7);
+  renderMonthDetail();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  const d=new Date(detailMonth+'-01');
+  d.setMonth(d.getMonth()+1);
+  detailMonth=d.toISOString().slice(0,7);
+  renderMonthDetail();
+});
+
+populateCatSelect();
+renderAll();
+window.addEventListener('resize', () => { renderDonut(); renderWaterfall(); renderBar(); renderHBar(); });
+</script>
 </body>
 </html>
